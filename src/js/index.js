@@ -1,13 +1,17 @@
-//import react into the bundle
 import React from "react";
 import ReactDOM from "react-dom/client";
-
-// include your styles into the webpack bundle
+import ToDoList from "./component/home.jsx";
+import { TaskProvider } from "./component/TaskContext";
 import "../styles/index.css";
 
-//import your own components
-import Home from "./component/home.jsx";
+const rootElement = document.getElementById("app");
 
-//render your react application
-ReactDOM.createRoot(document.getElementById('app')).render(<Home/>);
-
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <TaskProvider>
+      <ToDoList />
+    </TaskProvider>
+  );
+} else {
+  console.error("No DOM element with id 'app' found.");
+}
