@@ -1,52 +1,105 @@
-import React, { useContext, useEffect, useState } from "react";
-import TaskContext from "./TaskContext";
+import React, { useEffect, useState } from "react";
 
-const ToDoList = () => {
-  const { tasks, taskActions } = useContext(TaskContext);
-  const [newTask, setNewTask] = useState("");
+const API_BASE_URL = "https://playground.4geeks.com/apis/fake/contact/";
 
-  const handleAddTask = (e) => {
-    e.preventDefault();
-    if (newTask.trim()) {
-      taskActions({ type: "add", payload: newTask });
-      setNewTask("");
-    }
-  };
+const ToDoListApp = () => {
+  const [contacts, setContacts] = useState([]);
+  const [newContact, setNewContact] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+  });
 
-  const handleRemoveTask = (index) => {
-    taskActions({ type: "remove", index });
-  };
-
+  // Obtener contactos desde la API
   useEffect(() => {
-    // Fetch tasks from API (this would go here if needed)
+    fetch(API_BASE_URL)
+      .then((response) => response.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setContacts(data);
+        } else {
+          console.error("Data received is not an array");
+        }
+      })
+      .catch((error) => console.error("Error fetching contacts:", error));
   }, []);
 
+  // Manejar cambios en el formulario de nuevo contacto
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewContact((prevContact) => ({
+      ...prevContact,
+      [name]: value,
+    }));
+  };
+
+  // Agregar contacto
+  const addContact = () => {
+    fetch(API_BASE_URL, {
+      method: "POST",
+      body: JSON.stringify(newContact),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => setContacts((prevContacts) => [...prevContacts, data]))
+      .catch((error) => console.error("Error adding contact:", error));
+  };
+
+  // Eliminar contacto
+  const deleteContact = (id) => {
+    fetch(`${API_BASE_URL}${id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.ok) {
+          setContacts((prevContacts) =>
+            prevContacts.filter((contact) => contact.id !== id)
+          );
+        }
+      })
+      .catch((error) => console.error("Error deleting contact:", error));
+  };
+
   return (
-    <div className="todo-list">
-      <h2>Todo List</h2>
-      <form onSubmit={handleAddTask}>
-        <input
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Add new task"
-        />
-        <button type="submit">Add Task</button>
-      </form>
+    <div>
+      <h2>Contact List</h2>
       <ul>
-        {tasks.length === 0 ? (
-          <li>No tasks available</li>
-        ) : (
-          tasks.map((task, index) => (
-            <li key={index}>
-              {task}
-              <button onClick={() => handleRemoveTask(index)}>Remove</button>
+        {contacts.length > 0 ? (
+          contacts.map((contact) => (
+            <li key={contact.id}>
+              {contact.full_name} - {contact.phone} - {contact.email}
+              <button onClick={() => deleteContact(contact.id)}>Delete</button>
             </li>
           ))
+        ) : (
+          <li>No contacts available</li>
         )}
       </ul>
+      <h3>Add New Contact</h3>
+      <input
+        type="text"
+        name="full_name"
+        value={newContact.full_name}
+        placeholder="Full Name"
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="phone"
+        value={newContact.phone}
+        placeholder="Phone"
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="email"
+        value={newContact.email}
+        placeholder="Email"
+        onChange={handleChange}
+      />
+      <button onClick={addContact}>Add Contact</button>
     </div>
   );
 };
 
-export default ToDoList;
+export default ToDoListApp;
